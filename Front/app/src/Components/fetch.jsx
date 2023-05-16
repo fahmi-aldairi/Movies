@@ -1,120 +1,175 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 function Fetch() {
-  const [data, setData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [movies, setMovies] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState("");
+  const [filteredMovies, setFilteredMovies] = useState([]);
 
   useEffect(() => {
-    // Fetch the list of movies from the Express API endpoint
-    fetch("http://localhost:4009/movies")
-      .then((res) => res.json())
-      .then((data) => setData(data))
-      .catch((error) => console.error(error));
+    fetchMovies();
   }, []);
-  const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
+
+  useEffect(() => {
+    handleSearch(search);
+  }, [search]);
+
+  useEffect(() => {
+    if (selectedGenres === "") {
+      setFilteredMovies(movies);
+    } else {
+      fetchMoviesByGenre(selectedGenres);
+    }
+  }, [selectedGenres]);
+
+  const fetchMovies = async () => {
+    try {
+      const response = await axios.get("http://localhost:4009/movies");
+      const moviesData = response.data;
+      setMovies(moviesData);
+      setFilteredMovies(moviesData);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleCategoryChange = (event) => {
-    setSelectedCategory(event.target.value);
+  const fetchMoviesByGenre = async (genreId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:4009/movies/genre/${genreId}`
+      );
+      const moviesData = response.data;
+      setFilteredMovies(moviesData);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const filteredData = data.filter(
-    (movie) =>
-      movie.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedCategory === "" || movie.genre.includes(selectedCategory))
-  );
+  const handleSearch = (query) => {
+    const filtered = movies.filter(
+      (movie) =>
+        movie.title.toLowerCase().includes(query.toLowerCase()) &&
+        (selectedGenres === "" ||
+          movie.genre_ids.includes(parseInt(selectedGenres)))
+    );
+    setFilteredMovies(filtered);
+  };
 
-  const categories = [...new Set(data.map((movie) => movie.genre).flat())];
-
+  /////////
   return (
     <>
-      <div className="" style={{ marginTop: "3rem" }}>
-        <div className="flex justify-center p-4">
-          <input
-            type="text"
-            placeholder="Search movies..."
-            className="p-2 border border-gray-300 rounded-lg"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-          <select
-            className="ml-4 p-2 border border-gray-300 rounded-lg"
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-          >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
-        {filteredData.map((ele) => (
-          <>
-            {/* component */}
-            <div
-              className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12"
-              key={ele.id}
+      <div className="mt-14">
+        <div className="flex flex-row justify-between p-4">
+          <div>
+            <select
+              id="large"
+              className="block w-full px-4 py-3 text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              value={selectedGenres}
+              onChange={(e) => setSelectedGenres(e.target.value)}
             >
-              <div className="py-3 sm:max-w-xl sm:mx-auto">
-                <div className="bg-white shadow-lg border-gray-100 max-h-96	 border sm:rounded-3xl p-8 flex space-x-8">
-                  <div className="h-48 overflow-visible w-1/3">
-                    <img
-                      className="ImageCard rounded-3xl shadow-lg"
-                      src={`https://image.tmdb.org/t/p/original/${ele.poster_path}`}
-                      alt=""
-                      style={{ width: "25rem", height: "30rem" }}
+              <option selected="">Choose Genres</option>
+              <option value="">All Genres</option>
+              <option value="28">Action</option>
+              <option value="35">Comedy</option>
+              <option value="18">Drama</option>
+            </select>
+          </div>
+          <div>
+            <form>
+              <label
+                htmlFor="default-search"
+                className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
+              >
+                Search
+              </label>
+              <div className="relative mx-20">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <svg
+                    aria-hidden="true"
+                    className="w-5 h-5 text-gray-500 dark:text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
-                  </div>
-                  <div className="flex flex-col w-1/2 space-y-4">
-                    <div className="flex justify-between items-start flex-wrap">
-                      <h2 className="text-2xl font-bold">{ele.title}</h2>
+                  </svg>
+                </div>
+                <input
+                  type="search"
+                  id="default-search"
+                  className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder="Search Mockups, Logos..."
+                  required=""
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="text-white absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 p-10 min-h-screen">
+          {filteredMovies.map((ele) => (
+            <>
+              <div key={ele.id} className="w-full">
+                <a
+                  href="#"
+                  className="flex flex-col items-center h-full bg-white border border-gray-200 rounded-lg shadow md:flex-row hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                >
+                  <img
+                    className="object-cover w-full h-full rounded-t-lg md:w-64 md:rounded-none md:rounded-l-lg"
+                    src={`https://image.tmdb.org/t/p/original/${ele.poster_path}`}
+                    alt=""
+                  />
+                  <div className="flex flex-col justify-between p-4 leading-normal">
+                    <div className="flex flex-row justify-between flex-wrap">
+                      <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        {ele.title}
+                      </h5>
                       <div className="bg-yellow-400 font-bold rounded-xl p-2">
-                        {ele.vote_average}
+                        7.2
                       </div>
                     </div>
-                    <div>
-                      <div className="text-sm text-gray-400">Series</div>
-                      <div className="text-lg text-gray-800">
-                        {ele.release_date}
+
+                    <div className="my-4">
+                      <div>
+                        <div className="text-sm text-gray-400">Series</div>
+                        <div className="text-lg text-gray-800">
+                          {ele.release_date}
+                        </div>
+                        <div className="text-sm text-gray-400 mt-20">
+                          popularity
+                        </div>
+                        <div className="text-lg text-gray-800">
+                          {ele.popularity}
+                        </div>
                       </div>
-                      <div className="text-lg text-gray-800">
-                        {ele.popularity}
-                      </div>
+                      <div></div>
                     </div>
-                    <p className=" text-gray-400 max-h-40 overflow-y-hidden">
+                    <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
                       {ele.overview}
                     </p>
-                    <div className="flex text-2xl font-bold text-a">$83.90</div>
                   </div>
-                </div>
+                </a>
               </div>
-            </div>
-            {/* <div className="flex flex-col  rounded-lg bg-gray-400 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] dark:bg-neutral-700 md:max-w-xl md:flex-row">
-              <img
-                className="h-96 w-full rounded-t-lg object-cover md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                src={`https://image.tmdb.org/t/p/original/${ele.poster_path}`}
-                alt=""
-              />
-              <div className="flex flex-col justify-start p-6">
-                <h5 className="mb-2 text-xl font-medium text-neutral-800 dark:text-neutral-50">
-                  Card title
-                </h5>
-                <p className="mb-4 text-base text-neutral-600 dark:text-neutral-200">
-                  This is a wider card with supporting text below as a natural
-                  lead-in to additional content. This content is a little bit
-                  longer.
-                </p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-300">
-                  Last updated 3 mins ago
-                </p>
-              </div>
-            </div> */}
-          </>
-        ))}
+            </>
+          ))}
+        </div>
       </div>
     </>
   );

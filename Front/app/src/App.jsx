@@ -1,26 +1,16 @@
 import "./App.css";
 import Nav from "./Components/Nav";
 import Fetch from "./Components/fetch";
+import Footer from "./Components/footer";
 
 function App() {
   return (
     <>
-        <Nav />
-        <Fetch/>
+      <Nav />
+      <Fetch />
+      <Footer />
     </>
   );
 }
 
 export default App;
-
-{
-  /* <BrowserRouter>
-  <Nav />
-  <Routes>
-    <Route index element={<Fetch />} />
-    <Route path="blogs" element={<Blogs />} />
-    <Route path="contact" element={<Contact />} />
-    <Route path="*" element={<NoPage />} />
-  </Routes>
-</BrowserRouter> */
-}
